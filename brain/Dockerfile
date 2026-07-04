@@ -17,7 +17,7 @@ FROM ghcr.io/jpvenson/jellyfin.pgsql:10.11.11-1
 # supported line). NOTE: the entrypoint file is `rffmpeg` — NO .py
 # extension since the repo reorganization.
 ARG RFFMPEG_REPO=https://raw.githubusercontent.com/joshuaboniface/rffmpeg
-ARG RFFMPEG_REF=f54ac8437bb0d0666af5b73c78868be2523281b0
+ARG RFFMPEG_REF=f54ac843c7c8a157562e7ce37aaebbc5cb41354e
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

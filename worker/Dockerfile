@@ -26,7 +26,7 @@ COPY entrypoint.sh /entrypoint.sh
 #   command="/usr/local/bin/limited-wrapper.py",restrict ssh-ed25519 ...
 # (the key file comes from the k8s Secret — put the prefix THERE).
 ARG RFFMPEG_REPO=https://raw.githubusercontent.com/joshuaboniface/rffmpeg
-ARG RFFMPEG_REF=f54ac8437bb0d0666af5b73c78868be2523281b0
+ARG RFFMPEG_REF=f54ac843c7c8a157562e7ce37aaebbc5cb41354e
 RUN apt-get update && apt-get install -y --no-install-recommends python3 curl ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSL "${RFFMPEG_REPO}/${RFFMPEG_REF}/hardening/limited-wrapper.py" \
