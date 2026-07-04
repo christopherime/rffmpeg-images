@@ -1,4 +1,4 @@
-# rffmpeg transcode worker for the GXF cluster.
+# rffmpeg transcode worker (sshd + jellyfin-ffmpeg receiver).
 #
 # Based on the OFFICIAL jellyfin image so /usr/lib/jellyfin-ffmpeg is the
 # EXACT same jellyfin-ffmpeg build the brain emits arguments for

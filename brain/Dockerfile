@@ -1,4 +1,4 @@
-# jellyfin.pgsql + rffmpeg "brain" layer for the GXF cluster.
+# jellyfin.pgsql + rffmpeg "brain" layer.
 #
 # Adds what the jpvenson image lacks for rffmpeg (verified 2026-07-04 by
 # code review of both projects): python3 + click/yaml/psycopg2 (psycopg2

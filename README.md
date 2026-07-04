@@ -1,7 +1,8 @@
 # rffmpeg-images
 
-Container images for **distributed Jellyfin transcoding** on the GXF
-cluster (rffmpeg brain + ffmpeg workers across both GPU nodes).
+Container images for **distributed Jellyfin transcoding** with
+[rffmpeg](https://github.com/joshuaboniface/rffmpeg): a Jellyfin "brain"
+plus ffmpeg worker pods across GPU nodes.
 
 | Image | Base | Purpose |
 | ----- | ---- | ------- |
@@ -18,10 +19,9 @@ mid-transcode on CUDA filter/segment options.
 
 ## Deployment
 
-Consumed by the `rffmpeg-worker` chart (geekxflood/helm-charts) and the
-`jellyfin-new` ArgoCD Application (geekxflood/applicationset). Cluster
-documentation: `wiki/docs/applications/media/` in the applicationset
-repo.
+Consumed by the [`rffmpeg-worker` Helm chart](https://github.com/geekxflood/helm-charts/tree/main/charts/rffmpeg-worker);
+real deployment values (nodes, claims, paths) belong in your private
+deployment repo, never in public chart defaults.
 
 Operational notes baked into the images:
 
