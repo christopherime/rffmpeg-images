@@ -19,7 +19,20 @@ ENV NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
 
 COPY sshd_rffmpeg.conf /etc/ssh/sshd_config.d/rffmpeg.conf
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+
+# Upstream's ForceCommand allowlist wrapper (docs/HARDENING, PR #99):
+# only ffmpeg/ffprobe binaries can be executed over SSH, everything else
+# is rejected and logged. Enforced via the authorized_keys entry:
+#   command="/usr/local/bin/limited-wrapper.py",restrict ssh-ed25519 ...
+# (the key file comes from the k8s Secret — put the prefix THERE).
+ARG RFFMPEG_REPO=https://raw.githubusercontent.com/joshuaboniface/rffmpeg
+ARG RFFMPEG_REF=f54ac8437bb0d0666af5b73c78868be2523281b0
+RUN apt-get update && apt-get install -y --no-install-recommends python3 curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSL "${RFFMPEG_REPO}/${RFFMPEG_REF}/hardening/limited-wrapper.py" \
+        -o /usr/local/bin/limited-wrapper.py \
+    && chmod 755 /usr/local/bin/limited-wrapper.py \
+    && chmod +x /entrypoint.sh
 
 EXPOSE 22
 ENTRYPOINT ["/entrypoint.sh"]
