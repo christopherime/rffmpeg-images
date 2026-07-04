@@ -5,8 +5,8 @@ cluster (rffmpeg brain + ffmpeg workers across both GPU nodes).
 
 | Image | Base | Purpose |
 | ----- | ---- | ------- |
-| `ghcr.io/geekxflood/rffmpeg-worker:<jellyfin-version>` | `jellyfin/jellyfin` | sshd + the exact matching `jellyfin-ffmpeg`; receives transcode jobs over SSH |
-| `ghcr.io/geekxflood/jellyfin-pgsql-rffmpeg:<pgsql-tag>` | `ghcr.io/jpvenson/jellyfin.pgsql` | the Jellyfin "brain" with the [rffmpeg](https://github.com/joshuaboniface/rffmpeg) shim symlinked as `ffmpeg`/`ffprobe` (`JELLYFIN_FFMPEG` repointed) |
+| `ghcr.io/christopherime/rffmpeg-worker:<jellyfin-version>` | `jellyfin/jellyfin` | sshd + the exact matching `jellyfin-ffmpeg`; receives transcode jobs over SSH |
+| `ghcr.io/christopherime/jellyfin-pgsql-rffmpeg:<pgsql-tag>` | `ghcr.io/jpvenson/jellyfin.pgsql` | the Jellyfin "brain" with the [rffmpeg](https://github.com/joshuaboniface/rffmpeg) shim symlinked as `ffmpeg`/`ffprobe` (`JELLYFIN_FFMPEG` repointed) |
 
 ## Version lockstep rule
 

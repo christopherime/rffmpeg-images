@@ -12,7 +12,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  OWNER: geekxflood
+  OWNER: christopherime
   # Bump BOTH together — worker ffmpeg must match brain Jellyfin version.
   JELLYFIN_VERSION: "10.11.11"
   PGSQL_TAG: "10.11.11-1"
