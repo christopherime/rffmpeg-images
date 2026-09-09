@@ -21,7 +21,7 @@ env:
   # 12.0 ships FFmpeg 8.1.2 against 10.11's 7.x, so a 12.0 brain talking
   # to a 10.11 worker corrupts transcodes — these two move as a pair.
   JELLYFIN_VERSION_12: "12.0"
-  PGSQL_TAG_12: "12.0.0-1"
+  PGSQL_TAG_12: "12.0.0-2"
 
 jobs:
   build:
