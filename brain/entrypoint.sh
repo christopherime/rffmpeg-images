@@ -41,10 +41,14 @@ xmlstarlet edit -L -u \
     '//DatabaseConfigurationOptions/CustomProviderOptions/PluginAssembly' \
     -v 'Jellyfin.Plugin.Postgresql.dll' /config/config/database.xml
 
-if [ -z "${POSTGRES_HOST:-}" ]; then
-    echo "PostgreSQL connection unset. Set POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER and POSTGRES_PASSWORD, then restart."
-    exit 3
-fi
+# Checked individually rather than relying on `set -u` further down, which
+# would abort with an unhelpful "unbound variable" instead of saying which.
+for v in POSTGRES_HOST POSTGRES_PORT POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD; do
+    if [ -z "${!v:-}" ]; then
+        echo "\$${v} is unset. Set POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER and POSTGRES_PASSWORD, then restart."
+        exit 3
+    fi
+done
 
 ConnectionString="Password=${POSTGRES_PASSWORD};User ID=${POSTGRES_USER};Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DB}"
 if [ -n "${POSTGRES_SSLMODE:-}" ]; then

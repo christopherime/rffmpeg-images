@@ -71,19 +71,23 @@ RUN chmod +x /entrypoint.sh
 # extension since the repo reorganization.
 ARG RFFMPEG_REPO=https://raw.githubusercontent.com/joshuaboniface/rffmpeg
 ARG RFFMPEG_REF=f54ac843c7c8a157562e7ce37aaebbc5cb41354e
-RUN curl -fsSL "${RFFMPEG_REPO}/${RFFMPEG_REF}/rffmpeg" \
+# NOTE: /etc/rffmpeg is created FIRST here, unlike the 10.11 brain. That
+# one inherits an existing /etc/rffmpeg from its jpvenson base and relies
+# on a `curl ... || mkdir -p` fallback whose precedence quietly swallows
+# the sample download. Stock jellyfin has no such directory, so create it
+# up front and treat the sample as genuinely optional.
+RUN mkdir -p /etc/rffmpeg /var/lib/rffmpeg \
+    && curl -fsSL "${RFFMPEG_REPO}/${RFFMPEG_REF}/rffmpeg" \
         -o /usr/local/bin/rffmpeg \
-    && curl -fsSL "${RFFMPEG_REPO}/${RFFMPEG_REF}/rffmpeg.yml.sample" \
-        -o /etc/rffmpeg/rffmpeg.yml.sample 2>/dev/null \
-        || mkdir -p /etc/rffmpeg \
     && chmod +x /usr/local/bin/rffmpeg \
+    && (curl -fsSL "${RFFMPEG_REPO}/${RFFMPEG_REF}/rffmpeg.yml.sample" \
+        -o /etc/rffmpeg/rffmpeg.yml.sample || true) \
     # rffmpeg dispatches on argv[0] SUBSTRING: "rffmpeg" -> management
     # CLI, "ffprobe" -> probe mode, else ffmpeg mode. The symlinks are
     # therefore extensionless and must NOT live under a directory whose
     # path contains "rffmpeg" (issue #94 failure mode).
     && ln -s /usr/local/bin/rffmpeg /usr/local/bin/ffmpeg \
-    && ln -s /usr/local/bin/rffmpeg /usr/local/bin/ffprobe \
-    && mkdir -p /etc/rffmpeg /var/lib/rffmpeg
+    && ln -s /usr/local/bin/rffmpeg /usr/local/bin/ffprobe
 
 # 12.0 ships jellyfin-ffmpeg8 (8.1.2) at the same path. 12.0 also REMOVED
 # the MediaEncoder/Path API route, so the encoder path can only be set by
