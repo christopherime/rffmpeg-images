@@ -16,6 +16,12 @@ env:
   # Bump BOTH together — worker ffmpeg must match brain Jellyfin version.
   JELLYFIN_VERSION: "10.11.11"
   PGSQL_TAG: "10.11.11-1"
+  # The 12.0 line, built alongside the 10.11 one so a cluster can be
+  # cut over (brain AND worker together) and rolled back by tag alone.
+  # 12.0 ships FFmpeg 8.1.2 against 10.11's 7.x, so a 12.0 brain talking
+  # to a 10.11 worker corrupts transcodes — these two move as a pair.
+  JELLYFIN_VERSION_12: "12.0"
+  PGSQL_TAG_12: "12.0.0-1"
 
 jobs:
   build:
@@ -28,10 +34,29 @@ jobs:
         include:
           - name: rffmpeg-worker
             context: worker
+            file: worker/Dockerfile
             tag_env: JELLYFIN_VERSION
+            jellyfin_env: JELLYFIN_VERSION
           - name: jellyfin-pgsql-rffmpeg
             context: brain
+            file: brain/Dockerfile
             tag_env: PGSQL_TAG
+            jellyfin_env: JELLYFIN_VERSION
+          # --- Jellyfin 12.0 ---
+          # The 12.0 brain uses a separate Dockerfile: the 10.11 one is
+          # built FROM ghcr.io/jpvenson/jellyfin.pgsql, which has no 12.0
+          # tag, so the 12.0 brain builds on the official image and
+          # installs nintwentydo's PostgreSQL provider itself.
+          - name: rffmpeg-worker
+            context: worker
+            file: worker/Dockerfile
+            tag_env: JELLYFIN_VERSION_12
+            jellyfin_env: JELLYFIN_VERSION_12
+          - name: jellyfin-pgsql-rffmpeg
+            context: brain
+            file: brain/Dockerfile.12
+            tag_env: PGSQL_TAG_12
+            jellyfin_env: JELLYFIN_VERSION_12
     steps:
       - uses: actions/checkout@v4
 
@@ -50,8 +75,11 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
           push: true
           platforms: linux/amd64
+          build-args: |
+            JELLYFIN_VERSION=${{ env[matrix.jellyfin_env] }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.name }}:${{ steps.tag.outputs.value }}
           labels: |

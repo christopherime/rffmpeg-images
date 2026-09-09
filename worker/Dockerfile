@@ -2,10 +2,16 @@
 #
 # Based on the OFFICIAL jellyfin image so /usr/lib/jellyfin-ffmpeg is the
 # EXACT same jellyfin-ffmpeg build the brain emits arguments for
-# (ghcr.io/jpvenson/jellyfin.pgsql shares this base). The tag below MUST
-# move in lockstep with the brain's Jellyfin version — a version-skewed
-# worker fails mid-transcode on CUDA filter/segment options.
-FROM jellyfin/jellyfin:10.11.11
+# (the 10.11 brain's jpvenson base shares it; the 12.0 brain is built
+# FROM this same official image). The tag below MUST move in lockstep
+# with the brain's Jellyfin version — a version-skewed worker fails
+# mid-transcode on CUDA filter/segment options, and 12.0 replaces
+# FFmpeg 7 with 8.1.2, which is exactly such a skew.
+#
+# Parameterised so one Dockerfile serves both lines; CI passes it per
+# matrix entry. The default keeps the 10.11 build byte-identical.
+ARG JELLYFIN_VERSION=10.11.11
+FROM jellyfin/jellyfin:${JELLYFIN_VERSION}
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends openssh-server \
