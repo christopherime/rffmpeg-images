@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Template only. entrypoint.sh copies this to /config/config/database.xml
+  on first start and fills in ConnectionString from the POSTGRES_* env.
+
+  PluginAssembly/PluginName identify nintwentydo's provider. The 10.11
+  line used JPVenson's (Jellyfin.Plugin.Pgsql.dll / "PostgreSQL"); the
+  plugin NAME is the same string, the ASSEMBLY is not.
+-->
+<DatabaseConfigurationOptions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <DatabaseType>PLUGIN_PROVIDER</DatabaseType>
+  <CustomProviderOptions>
+    <PluginAssembly>Jellyfin.Plugin.Postgresql.dll</PluginAssembly>
+    <PluginName>PostgreSQL</PluginName>
+    <ConnectionString></ConnectionString>
+  </CustomProviderOptions>
+  <LockingBehavior>NoLock</LockingBehavior>
+</DatabaseConfigurationOptions>

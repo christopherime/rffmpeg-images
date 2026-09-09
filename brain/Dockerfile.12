@@ -1,0 +1,93 @@
+# jellyfin 12.0 + PostgreSQL provider + rffmpeg "brain" layer.
+#
+# WHY THIS IS A SEPARATE FILE FROM brain/Dockerfile
+# The 10.11 brain is built FROM ghcr.io/jpvenson/jellyfin.pgsql, which
+# bakes in JPVenson's PostgreSQL plugin. That image has no 12.0 tag:
+# JPVenson/Jellyfin.Pgsql is still at 10.11.11-1, its
+# feature/12.0_unstable branch has not moved since 2026-06-11 and still
+# declares targetAbi 10.11.0.0 / net9.0, and upstream issue #47 is open.
+#
+# So the 12.0 brain builds on the OFFICIAL jellyfin image and installs a
+# PostgreSQL provider itself. It uses nintwentydo/jellyfin-plugin-
+# postgresql rather than a fork of JPVenson's: Jellyfin 12.0 core ships
+# SQLite only (zero Npgsql references in the 12.0 tree) so a provider
+# plugin is mandatory, and nintwentydo's is published, 12.0-native
+# (targetAbi 12.0.0.0, net10.0) and carries a unit + integration test
+# suite validated against PostgreSQL 15-18, where JPVenson's has no
+# tests and no 12.0 release at all.
+#
+# Its manifest's "requires a fresh database" caveat is about SQLite and
+# does not mean the schemas differ: the two plugins generate an
+# IDENTICAL schema -- 50 tables, same columns, same keys, no identity
+# columns, both "C" collation -- because the schema is Jellyfin CORE's
+# EF model, not the plugin's. The library therefore moves across as
+# data. See files/jellyfin-12/README.md in the applicationset repo.
+#
+# There is deliberately NO .NET build stage: the plugin ships as a
+# release zip, so this is a pinned download rather than a fork we would
+# have to keep rebased on upstream and rebuild on every patch release.
+ARG JELLYFIN_VERSION=12.0
+FROM jellyfin/jellyfin:${JELLYFIN_VERSION}
+
+# postgresql-client is REQUIRED, not optional: the provider shells out to
+# pg_dump and psql for its pre-migration backup and restore. Without them
+# Jellyfin dies at startup with
+#   "An error occurred trying to start process 'pg_dump'"
+# (confirmed by running it, 2026-09-09). xmlstarlet is used by the
+# entrypoint to template database.xml. The remaining packages are the
+# rffmpeg layer's, unchanged from the 10.11 brain: psycopg2 is REQUIRED
+# whenever the RFFMPEG_POSTGRES_* env vars are set (the import is
+# conditional-on-env but unguarded).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        postgresql-client xmlstarlet unzip \
+        python3 python3-yaml python3-click python3-psycopg2 \
+        openssh-client ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- PostgreSQL provider -------------------------------------------------
+# Pinned. Verify the md5 published alongside the release asset.
+ARG PGSQL_PLUGIN_VERSION=1.1.2.1
+ARG PGSQL_PLUGIN_REPO=https://github.com/nintwentydo/jellyfin-plugin-postgresql
+RUN mkdir -p /jellyfin-pgsql/plugin \
+    && curl -fsSL -o /tmp/pg.zip \
+        "${PGSQL_PLUGIN_REPO}/releases/download/${PGSQL_PLUGIN_VERSION}/postgresql_${PGSQL_PLUGIN_VERSION}.zip" \
+    && curl -fsSL -o /tmp/pg.zip.md5 \
+        "${PGSQL_PLUGIN_REPO}/releases/download/${PGSQL_PLUGIN_VERSION}/postgresql_${PGSQL_PLUGIN_VERSION}.zip.md5" \
+    # The published .md5 is "<hash>  ./artifacts/<file>", so take field 1
+    # and re-point it at the downloaded path.
+    && echo "$(awk '{print $1}' /tmp/pg.zip.md5)  /tmp/pg.zip" | md5sum -c - \
+    && unzip -q /tmp/pg.zip -d /jellyfin-pgsql/plugin \
+    && rm /tmp/pg.zip /tmp/pg.zip.md5
+
+COPY database.xml /jellyfin-pgsql/database.xml
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# --- rffmpeg layer (unchanged from the 10.11 brain) ----------------------
+# rffmpeg pinned by commit (master HEAD f54ac843, 2025-11-03 — the only
+# tagged release, v1/2022, is pre-refactor legacy; master is the
+# supported line). NOTE: the entrypoint file is `rffmpeg` — NO .py
+# extension since the repo reorganization.
+ARG RFFMPEG_REPO=https://raw.githubusercontent.com/joshuaboniface/rffmpeg
+ARG RFFMPEG_REF=f54ac843c7c8a157562e7ce37aaebbc5cb41354e
+RUN curl -fsSL "${RFFMPEG_REPO}/${RFFMPEG_REF}/rffmpeg" \
+        -o /usr/local/bin/rffmpeg \
+    && curl -fsSL "${RFFMPEG_REPO}/${RFFMPEG_REF}/rffmpeg.yml.sample" \
+        -o /etc/rffmpeg/rffmpeg.yml.sample 2>/dev/null \
+        || mkdir -p /etc/rffmpeg \
+    && chmod +x /usr/local/bin/rffmpeg \
+    # rffmpeg dispatches on argv[0] SUBSTRING: "rffmpeg" -> management
+    # CLI, "ffprobe" -> probe mode, else ffmpeg mode. The symlinks are
+    # therefore extensionless and must NOT live under a directory whose
+    # path contains "rffmpeg" (issue #94 failure mode).
+    && ln -s /usr/local/bin/rffmpeg /usr/local/bin/ffmpeg \
+    && ln -s /usr/local/bin/rffmpeg /usr/local/bin/ffprobe \
+    && mkdir -p /etc/rffmpeg /var/lib/rffmpeg
+
+# 12.0 ships jellyfin-ffmpeg8 (8.1.2) at the same path. 12.0 also REMOVED
+# the MediaEncoder/Path API route, so the encoder path can only be set by
+# env, CLI or config file — this env is now the only lever.
+ENV JELLYFIN_FFMPEG=/usr/local/bin/ffmpeg
+
+ENTRYPOINT ["/entrypoint.sh"]
