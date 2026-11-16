@@ -26,7 +26,7 @@
 # There is deliberately NO .NET build stage: the plugin ships as a
 # release zip, so this is a pinned download rather than a fork we would
 # have to keep rebased on upstream and rebuild on every patch release.
-ARG JELLYFIN_VERSION=12.0
+ARG JELLYFIN_VERSION=12.4
 FROM jellyfin/jellyfin:${JELLYFIN_VERSION}
 
 # postgresql-client is REQUIRED, not optional: the provider shells out to
@@ -61,6 +61,9 @@ RUN apt-get update \
 
 # --- PostgreSQL provider -------------------------------------------------
 # Pinned. Verify the md5 published alongside the release asset.
+# 1.1.2.1 is still the newest release for STOCK Jellyfin (1.1.4.0 needs
+# nintwentydo's Jellyfin fork); kept for 12.4 after auditing the 12.x
+# provider interface and migrations (2026-11-16).
 ARG PGSQL_PLUGIN_VERSION=1.1.2.1
 ARG PGSQL_PLUGIN_REPO=https://github.com/nintwentydo/jellyfin-plugin-postgresql
 RUN mkdir -p /jellyfin-pgsql/plugin \

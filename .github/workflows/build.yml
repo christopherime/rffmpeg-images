@@ -20,8 +20,12 @@ env:
   # cut over (brain AND worker together) and rolled back by tag alone.
   # 12.0 ships FFmpeg 8.1.2 against 10.11's 7.x, so a 12.0 brain talking
   # to a 10.11 worker corrupts transcodes — these two move as a pair.
-  JELLYFIN_VERSION_12: "12.0"
-  PGSQL_TAG_12: "12.0.0-2"
+  # 12.0 -> 12.4 (2026-11-16): still jellyfin-ffmpeg8. The 12.0.0-2 /
+  # 12.0 tags stay published in GHCR for rollback. The PostgreSQL
+  # deployment needs a DB preflight before 12.4 starts — see
+  # applicationset files/jellyfin-12/UPGRADE-12.4.md.
+  JELLYFIN_VERSION_12: "12.4"
+  PGSQL_TAG_12: "12.4.0-1"
 
 jobs:
   build:
