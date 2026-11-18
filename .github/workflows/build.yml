@@ -28,7 +28,8 @@ env:
   # 12.4.0-2: + Webtoon Reader 1.0.0.0 and File Transformation 3.0.3.0
   # baked into the brain (brain/Dockerfile.12).
   # 12.4.0-3: Webtoon Reader 1.1.0.0 (the strip's width follows the screen).
-  PGSQL_TAG_12: "12.4.0-3"
+  # 12.4.0-4: Webtoon Reader 1.2.0.0 (zoom past the screen width).
+  PGSQL_TAG_12: "12.4.0-4"
 
 jobs:
   build:
