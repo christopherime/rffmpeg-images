@@ -32,7 +32,7 @@ ARG JELLYFIN_VERSION=12.4
 # Its version follows the Jellyfin version like the PostgreSQL provider's:
 # bump it with JELLYFIN_VERSION. The workflow's GITHUB_TOKEN pulls it once
 # the package grants this repository read access.
-ARG WEBTOON_READER_IMAGE=ghcr.io/christopherime/jellyfin-plugin-webtoon-reader:1.2.0.0
+ARG WEBTOON_READER_IMAGE=ghcr.io/christopherime/jellyfin-plugin-webtoon-reader:1.3.0.0
 FROM ${WEBTOON_READER_IMAGE} AS webtoon-reader
 
 FROM jellyfin/jellyfin:${JELLYFIN_VERSION}

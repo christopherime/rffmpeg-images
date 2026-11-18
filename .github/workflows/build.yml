@@ -29,7 +29,8 @@ env:
   # baked into the brain (brain/Dockerfile.12).
   # 12.4.0-3: Webtoon Reader 1.1.0.0 (the strip's width follows the screen).
   # 12.4.0-4: Webtoon Reader 1.2.0.0 (zoom past the screen width).
-  PGSQL_TAG_12: "12.4.0-4"
+  # 12.4.0-5: Webtoon Reader 1.3.0.0 (the webtoon shelf).
+  PGSQL_TAG_12: "12.4.0-5"
 
 jobs:
   build:
