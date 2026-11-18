@@ -21,6 +21,29 @@ rm -rf "${PLUGIN_DIR}"
 mkdir -p "${PLUGIN_DIR}"
 cp -r /jellyfin-pgsql/plugin/* "${PLUGIN_DIR}/"
 
+# Webtoon Reader and File Transformation, baked in for the same reason.
+# Any other copy of the same plugin is removed first, found by the plugin
+# GUID in its meta.json: the dashboard installs to "<Name>_<version>"
+# folders (with spaces), and Jellyfin would otherwise keep whichever is
+# newer and delete the baked, pinned one. Plugin settings live in
+# /config/plugins/configurations and are kept. WEBTOON_READER_DEV_PLUGIN=1
+# keeps a locally built reader in place (the plugin's dev stack).
+install_baked_plugin() {
+    local folder="$1" guid="$2" source="$3" dir
+    for dir in /config/plugins/*/; do
+        if [ -f "${dir}meta.json" ] && grep -Eqi "\"guid\": *\"${guid}\"" "${dir}meta.json"; then
+            rm -rf "${dir}"
+        fi
+    done
+    rm -rf "/config/plugins/${folder}"
+    mkdir -p "/config/plugins/${folder}"
+    cp -r "${source}"/* "/config/plugins/${folder}/"
+}
+install_baked_plugin FileTransformation 5e87cc92-571a-4d8d-8d98-d2d4147f9f90 /jellyfin-file-transformation/plugin
+if [ "${WEBTOON_READER_DEV_PLUGIN:-}" != "1" ]; then
+    install_baked_plugin WebtoonReader d759c36d-274c-42f6-a32a-b7c482536b4d /jellyfin-webtoon-reader/plugin
+fi
+
 if [ ! -f /config/config/database.xml ]; then
     mkdir -p /config/config
     cp /jellyfin-pgsql/database.xml /config/config/database.xml

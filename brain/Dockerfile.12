@@ -27,6 +27,14 @@
 # release zip, so this is a pinned download rather than a fork we would
 # have to keep rebased on upstream and rebuild on every patch release.
 ARG JELLYFIN_VERSION=12.4
+# The Webtoon Reader plugin (christopherime/jellyfin-plugin-webtoon-reader,
+# private) is published as an image holding its plugin folder at /plugin.
+# Its version follows the Jellyfin version like the PostgreSQL provider's:
+# bump it with JELLYFIN_VERSION. The workflow's GITHUB_TOKEN pulls it once
+# the package grants this repository read access.
+ARG WEBTOON_READER_IMAGE=ghcr.io/christopherime/jellyfin-plugin-webtoon-reader:1.0.0.0
+FROM ${WEBTOON_READER_IMAGE} AS webtoon-reader
+
 FROM jellyfin/jellyfin:${JELLYFIN_VERSION}
 
 # postgresql-client is REQUIRED, not optional: the provider shells out to
@@ -76,6 +84,22 @@ RUN mkdir -p /jellyfin-pgsql/plugin \
     && echo "$(awk '{print $1}' /tmp/pg.zip.md5)  /tmp/pg.zip" | md5sum -c - \
     && unzip -q /tmp/pg.zip -d /jellyfin-pgsql/plugin \
     && rm /tmp/pg.zip /tmp/pg.zip.md5
+
+# --- Webtoon Reader + File Transformation ---------------------------------
+# Same pattern as the provider: baked into the image, copied into
+# /config/plugins by the entrypoint on every start. File Transformation
+# (IAmParadox27) is released per Jellyfin version; the reader needs it to
+# inject itself into jellyfin-web. Pinned by the release asset's SHA-256.
+COPY --from=webtoon-reader /plugin /jellyfin-webtoon-reader/plugin
+ARG FILE_TRANSFORMATION_VERSION=3.0.3.0
+ARG FILE_TRANSFORMATION_ASSET=Release-12.4.0.zip
+ARG FILE_TRANSFORMATION_SHA256=c608b2ccf802a2cd5fa48632565488a3f0d3ac52cbb51a9ea0c1b8849f8819e9
+RUN mkdir -p /jellyfin-file-transformation/plugin \
+    && curl -fsSL -o /tmp/ft.zip \
+        "https://github.com/IAmParadox27/jellyfin-plugin-file-transformation/releases/download/${FILE_TRANSFORMATION_VERSION}/${FILE_TRANSFORMATION_ASSET}" \
+    && echo "${FILE_TRANSFORMATION_SHA256}  /tmp/ft.zip" | sha256sum -c - \
+    && unzip -q /tmp/ft.zip -d /jellyfin-file-transformation/plugin \
+    && rm /tmp/ft.zip
 
 COPY database.xml /jellyfin-pgsql/database.xml
 COPY entrypoint.sh /entrypoint.sh
