@@ -33,7 +33,13 @@ COPY entrypoint.sh /entrypoint.sh
 # (the key file comes from the k8s Secret — put the prefix THERE).
 ARG RFFMPEG_REPO=https://raw.githubusercontent.com/joshuaboniface/rffmpeg
 ARG RFFMPEG_REF=f54ac843c7c8a157562e7ce37aaebbc5cb41354e
-RUN apt-get update && apt-get install -y --no-install-recommends python3 curl ca-certificates \
+# The wrapper logs to syslog (/dev/log) whenever stdout is not a TTY,
+# which is every rffmpeg call. With no syslog daemon each log line
+# raises a "--- Logging error ---" traceback on stderr, which SSH relays
+# into Jellyfin's ffmpeg logs. busybox syslogd (started by the
+# entrypoint) provides /dev/log and forwards the audit lines to the
+# container log instead.
+RUN apt-get update && apt-get install -y --no-install-recommends python3 curl ca-certificates busybox \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSL "${RFFMPEG_REPO}/${RFFMPEG_REF}/hardening/limited-wrapper.py" \
         -o /usr/local/bin/limited-wrapper.py \

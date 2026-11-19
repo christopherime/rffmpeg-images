@@ -19,4 +19,9 @@ fi
 mkdir -p /nvcache
 ln -sfn /nvcache /root/.nv
 
+# /dev/log for limited-wrapper.py: without it every wrapper log call
+# prints a Python traceback that SSH sends back to Jellyfin. Foreground
+# (-n) in the background so it keeps this shell's stdout = container log.
+busybox syslogd -n -S -O /dev/stdout &
+
 exec /usr/sbin/sshd -D -e
